@@ -36,11 +36,14 @@ function dbg {
 }
 
 function usage {
-  printf "Usage: %s [options]\n", "$0";
-  printf "Options:\n";
-  printf "   %-25s %-50s\n", '--opta', 'Enables Option A';
-  printf "   %-25s %-50s\n", '--optb', 'Enables Option B';
-  printf "   %-25s %-50s\n", '--optc', 'Enables Option C';
+  printf "Usage: %s [options]\n" "$0"
+  printf "Options:\n"
+  printf "   %-25s %-50s\n" '-d /path/to/db'  'Specify path to database file'
+  printf "   %-25s %-50s\n" '-w secs'         'Warning age in SECONDS for file backups'
+  printf "   %-25s %-50s\n" '-c secs'         'Critical age in SECONDS for file backups'
+  printf "   %-25s %-50s\n" '-W secs'         'Warning age in SECONDS for image backups'
+  printf "   %-25s %-50s\n" '-C secs'         'Critical age in SECONDS for image backups'
+  printf "   %-25s %-50s\n" '-h'              'Display this help and exit'
 }
 
 function is_sqlite_db {
