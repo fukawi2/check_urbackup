@@ -132,7 +132,7 @@ function main() {
   ### check image backups
   declare -r last_image_backups=$($sqlite3 '
     SELECT  name,
-            datetime(lastbackupi_image, "localtime"),
+            datetime(lastbackup_image, "localtime"),
             strftime("%s",CURRENT_TIMESTAMP) - strftime("%s",lastbackup_image)
     FROM clients;
   ')
