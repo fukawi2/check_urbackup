@@ -61,7 +61,7 @@ function main() {
   declare -i file_warning_age='86400'      # 24 hours
   declare -i file_critical_age='259200'    # 3 days
   declare -i image_warning_age='604800'    # 7 days
-  declare -i image_critical_age='1209600'  # 3 days
+  declare -i image_critical_age='1209600'  # 14 days
   declare db_fname='/usr/local/var/urbackup/backup_server.db'
 
   ### fetch cmdline options
