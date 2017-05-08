@@ -38,12 +38,14 @@ function dbg {
 function usage {
   printf "Usage: %s [options]\n" "$0"
   printf "Options:\n"
-  printf "   %-25s %-50s\n" '-d /path/to/db'  'Specify path to database file'
-  printf "   %-25s %-50s\n" '-w secs'         'Warning age in SECONDS for file backups'
-  printf "   %-25s %-50s\n" '-c secs'         'Critical age in SECONDS for file backups'
-  printf "   %-25s %-50s\n" '-W secs'         'Warning age in SECONDS for image backups'
-  printf "   %-25s %-50s\n" '-C secs'         'Critical age in SECONDS for image backups'
-  printf "   %-25s %-50s\n" '-h'              'Display this help and exit'
+  printf "   %-25s %-50s\n" \
+    '-d /path/to/db'  'Specify path to database file' \
+    '-w secs'         'Warning age in SECONDS for file backups' \
+    '-c secs'         'Critical age in SECONDS for file backups' \
+    '-W secs'         'Warning age in SECONDS for image backups' \
+    '-C secs'         'Critical age in SECONDS for image backups' \
+    '-X foobar'       'Exclude client "foobar". Can be given multiple times for different clients' \
+    '-h'              'Display this help and exit'
 }
 
 function is_sqlite_db {
@@ -63,9 +65,10 @@ function main() {
   declare -i image_warning_age='604800'    # 7 days
   declare -i image_critical_age='1209600'  # 14 days
   declare db_fname='/usr/local/var/urbackup/backup_server.db'
+  declare -a excluded_clients
 
   ### fetch cmdline options
-  while getopts ":hw:c:W:C:d:" opt; do
+  while getopts ":hw:c:W:C:d:X:" opt; do
     case $opt in
       d)
         db_fname="$OPTARG"
@@ -81,6 +84,10 @@ function main() {
         ;;
       C)
         image_critical_age="$OPTARG"
+        ;;
+      X)
+        # append to the array so we can exclude multiple clients
+        excluded_clients+=("$OPTARG")
         ;;
       h)
         usage
@@ -107,13 +114,18 @@ function main() {
   [[ $image_critical_age -lt $image_warning_age ]]  && { echo "Image CRITICAL time must be greater than WARNING time"; exit 3; }
   is_sqlite_db "$db_fname" || { echo "Does not appear to be a valid database: $dbname"; exit 3; }
 
+  ### turn the excluded_clients array into a string to include in the sql query
+  excluded_clients_str=$(printf "  AND name != '%s'\n" "${excluded_clients[@]}")
+
   ### check file backups
-  declare -r last_file_backups=$($sqlite3 '
-    SELECT  name,
-            datetime(lastbackup, "localtime"),
-            strftime("%s",CURRENT_TIMESTAMP) - strftime("%s",lastbackup)
-    FROM clients;
-  ')
+  declare -r last_file_backups=$($sqlite3 "
+SELECT  name,
+        datetime(lastbackup, \"localtime\"),
+        strftime(\"%s\",CURRENT_TIMESTAMP) - strftime(\"%s\",lastbackup)
+FROM clients
+WHERE 1=1
+$excluded_clients_str;
+")
   OLDIFS=$IFS; IFS=$'\n'
   for row in $last_file_backups ; do
     client_name=$(cut -d'|' -f1 <<< "$row")
@@ -130,12 +142,14 @@ function main() {
   IFS=$OLDIFS
 
   ### check image backups
-  declare -r last_image_backups=$($sqlite3 '
-    SELECT  name,
-            datetime(lastbackup_image, "localtime"),
-            strftime("%s",CURRENT_TIMESTAMP) - strftime("%s",lastbackup_image)
-    FROM clients;
-  ')
+  declare -r last_image_backups=$($sqlite3 "
+SELECT  name,
+        datetime(lastbackup_image, "localtime"),
+        strftime("%s",CURRENT_TIMESTAMP) - strftime("%s",lastbackup_image)
+FROM clients
+WHERE 1=1
+$excluded_clients_str;
+  ")
   OLDIFS=$IFS; IFS=$'\n'
   for row in $last_image_backups ; do
     client_name=$(cut -d'|' -f1 <<< "$row")
