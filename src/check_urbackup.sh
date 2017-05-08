@@ -144,8 +144,8 @@ $excluded_clients_str;
   ### check image backups
   declare -r last_image_backups=$($sqlite3 "
 SELECT  name,
-        datetime(lastbackup_image, "localtime"),
-        strftime("%s",CURRENT_TIMESTAMP) - strftime("%s",lastbackup_image)
+        datetime(lastbackup_image, \"localtime\"),
+        strftime(\"%s\",CURRENT_TIMESTAMP) - strftime(\"%s\",lastbackup_image)
 FROM clients
 WHERE 1=1
 $excluded_clients_str;
