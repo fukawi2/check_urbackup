@@ -115,7 +115,7 @@ function main() {
   is_sqlite_db "$db_fname" || { echo "Does not appear to be a valid database: $dbname"; exit 3; }
 
   ### turn the excluded_clients array into a string to include in the sql query
-  excluded_clients_str=$(printf "  AND name != '%s'\n" "${excluded_clients[@]}")
+  excluded_clients_str=$(printf "  AND name != '%s'\n" "${excluded_clients[@]-}")
 
   ### check file backups
   declare -r last_file_backups=$($sqlite3 "
